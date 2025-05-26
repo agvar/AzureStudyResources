@@ -1,0 +1,54 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "dataFactoryStudyGroup"
+		},
+		"AzureDataLakeStorage_study_accountKey": {
+			"value": ""
+		},
+		"AzureSqlDatabase001_password": {
+			"value": ""
+		},
+		"AzureSqlDatabase_study_password": {
+			"value": ""
+		},
+		"SHIRFilesystemVM_password": {
+			"value": ""
+		},
+		"AzureDataLakeStorage_study_properties_typeProperties_url": {
+			"value": "https://storageaccount0study.dfs.core.windows.net/"
+		},
+		"AzureSqlDatabase001_properties_typeProperties_server": {
+			"value": "sqlserverdatabasestudy.database.windows.net"
+		},
+		"AzureSqlDatabase001_properties_typeProperties_database": {
+			"value": "sqlDatabasestudy001"
+		},
+		"AzureSqlDatabase001_properties_typeProperties_userName": {
+			"value": "agvar"
+		},
+		"AzureSqlDatabase_study_properties_typeProperties_server": {
+			"value": "sqlserverdatabasestudy.database.windows.net"
+		},
+		"AzureSqlDatabase_study_properties_typeProperties_database": {
+			"value": "sqlDatabasestudy001"
+		},
+		"AzureSqlDatabase_study_properties_typeProperties_userName": {
+			"value": "agvar"
+		},
+		"SHIRFilesystemVM_properties_typeProperties_host": {
+			"value": "C:\\inetpub\\logs\\LogFiles\\W3SVC1"
+		},
+		"SHIRFilesystemVM_properties_typeProperties_userId": {
+			"value": "agvar"
+		},
+		"containerUri": {
+			"value": ""
+		},
+		"containerSasToken": {
+			"value": ""
+		}
+	}
+}
