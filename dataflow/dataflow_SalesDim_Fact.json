@@ -1,0 +1,241 @@
+{
+	"name": "dataflow_SalesDim_Fact",
+	"properties": {
+		"description": "data flow to move data from sales header and detail into sales fact",
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "SalesOrderHeader",
+						"type": "DatasetReference"
+					},
+					"name": "SalesOrderHeadertablesqldb"
+				},
+				{
+					"dataset": {
+						"referenceName": "SalesOrderDetail",
+						"type": "DatasetReference"
+					},
+					"name": "SalesOrderDetail"
+				},
+				{
+					"dataset": {
+						"referenceName": "salesCustomer",
+						"type": "DatasetReference"
+					},
+					"name": "Customer"
+				},
+				{
+					"dataset": {
+						"referenceName": "dimCustomer",
+						"type": "DatasetReference"
+					},
+					"name": "streamSKsink"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "factSales",
+						"type": "DatasetReference"
+					},
+					"name": "factSales"
+				},
+				{
+					"dataset": {
+						"referenceName": "dimCustomer",
+						"type": "DatasetReference"
+					},
+					"name": "dimCustomer"
+				},
+				{
+					"name": "cacheSinkCustomerSK"
+				}
+			],
+			"transformations": [
+				{
+					"name": "joinSalesHeaderDetail"
+				},
+				{
+					"name": "selectCols"
+				},
+				{
+					"name": "calculateTotalDue"
+				},
+				{
+					"name": "surrogateKey"
+				},
+				{
+					"name": "derivedColumnCustomerSK",
+					"description": "unable to generate derived column using cache sink"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          SalesOrderID as integer,",
+				"          RevisionNumber as integer,",
+				"          OrderDate as timestamp,",
+				"          DueDate as timestamp,",
+				"          ShipDate as timestamp,",
+				"          Status as integer,",
+				"          OnlineOrderFlag as boolean,",
+				"          SalesOrderNumber as string,",
+				"          PurchaseOrderNumber as string,",
+				"          AccountNumber as string,",
+				"          CustomerID as integer,",
+				"          ShipToAddressID as integer,",
+				"          BillToAddressID as integer,",
+				"          ShipMethod as string,",
+				"          CreditCardApprovalCode as string,",
+				"          SubTotal as decimal(19,4),",
+				"          TaxAmt as decimal(19,4),",
+				"          Freight as decimal(19,4),",
+				"          TotalDue as decimal(19,4),",
+				"          Comment as string,",
+				"          rowguid as string,",
+				"          ModifiedDate as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> SalesOrderHeadertablesqldb",
+				"source(output(",
+				"          SalesOrderID as integer,",
+				"          SalesOrderDetailID as integer,",
+				"          OrderQty as integer,",
+				"          ProductID as integer,",
+				"          UnitPrice as decimal(19,4),",
+				"          UnitPriceDiscount as decimal(19,4),",
+				"          LineTotal as decimal(38,6),",
+				"          rowguid as string,",
+				"          ModifiedDate as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> SalesOrderDetail",
+				"source(output(",
+				"          CustomerID as integer,",
+				"          NameStyle as boolean,",
+				"          Title as string,",
+				"          FirstName as string,",
+				"          MiddleName as string,",
+				"          LastName as string,",
+				"          Suffix as string,",
+				"          CompanyName as string,",
+				"          SalesPerson as string,",
+				"          EmailAddress as string,",
+				"          Phone as string,",
+				"          PasswordHash as string,",
+				"          PasswordSalt as string,",
+				"          rowguid as string,",
+				"          ModifiedDate as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> Customer",
+				"source(output(",
+				"          maxCustomerSK as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'select max(CustomerSK) as \\'maxCustomerSK\\' from study.dimCustomer',",
+				"     format: 'query') ~> streamSKsink",
+				"SalesOrderHeadertablesqldb, SalesOrderDetail join(SalesOrderHeadertablesqldb@SalesOrderID == SalesOrderDetail@SalesOrderID,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> joinSalesHeaderDetail",
+				"joinSalesHeaderDetail select(mapColumn(",
+				"          OrderDate,",
+				"          CustomerID,",
+				"          SubTotal,",
+				"          TaxAmt,",
+				"          Freight,",
+				"          SalesOrderID = SalesOrderDetail@SalesOrderID,",
+				"          OrderQty,",
+				"          ProductID,",
+				"          UnitPrice,",
+				"          UnitPriceDiscount,",
+				"          LineTotal",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectCols",
+				"selectCols derive(TotalDue = add(SubTotal,TaxAmt)) ~> calculateTotalDue",
+				"Customer keyGenerate(output(CustomerSK as long),",
+				"     startAt: 1L,",
+				"     stepValue: 1L) ~> surrogateKey",
+				"surrogateKey derive(CustomerSK = CustomerSK + cacheSinkCustomerSK#outputs()[1].maxCustomerSK) ~> derivedColumnCustomerSK",
+				"calculateTotalDue sink(allowSchemaDrift: true,",
+				"     validateSchema: true,",
+				"     input(",
+				"          SalesOrderID as integer,",
+				"          OrderDate as timestamp,",
+				"          CustomerID as integer,",
+				"          SubTotal as decimal(19,4),",
+				"          TaxAmt as decimal(19,4),",
+				"          Freight as decimal(19,4),",
+				"          TotalDue as decimal(19,4),",
+				"          OrderQty as integer,",
+				"          ProductID as integer,",
+				"          UnitPrice as decimal(19,4),",
+				"          UnitPriceDiscount as decimal(19,4),",
+				"          LineTotal as decimal(38,6)",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     saveOrder: 1,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          SalesOrderID,",
+				"          OrderDate,",
+				"          CustomerID,",
+				"          SubTotal,",
+				"          TaxAmt,",
+				"          Freight,",
+				"          TotalDue,",
+				"          OrderQty,",
+				"          ProductID,",
+				"          UnitPrice,",
+				"          UnitPriceDiscount,",
+				"          LineTotal",
+				"     )) ~> factSales",
+				"derivedColumnCustomerSK sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          CustomerSK as integer,",
+				"          CustomerID as integer,",
+				"          CompanyName as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          CustomerSK,",
+				"          CustomerID,",
+				"          CompanyName",
+				"     )) ~> dimCustomer",
+				"streamSKsink sink(validateSchema: false,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     store: 'cache',",
+				"     format: 'inline',",
+				"     output: false,",
+				"     saveOrder: 1) ~> cacheSinkCustomerSK"
+			]
+		}
+	}
+}

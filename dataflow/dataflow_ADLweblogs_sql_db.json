@@ -1,0 +1,76 @@
+{
+	"name": "dataflow_ADLweblogs_sql_db",
+	"properties": {
+		"description": "parse weblogs from the VM and push into a sql database table",
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ADLSweblogs",
+						"type": "DatasetReference"
+					},
+					"name": "sourceADLSweblogs"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "weblogsSQLtable",
+						"type": "DatasetReference"
+					},
+					"name": "sqlDatabase"
+				}
+			],
+			"transformations": [
+				{
+					"name": "splitColumns"
+				},
+				{
+					"name": "createFieldsfromSplit"
+				},
+				{
+					"name": "splitGetrequests"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          logdata as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     skipLines: 4) ~> sourceADLSweblogs",
+				"sourceADLSweblogs derive(log_data_split = split(logdata,' ')) ~> splitColumns",
+				"splitColumns derive(LogDatetime = toTimestamp(log_data_split[1] + 'T' + log_data_split[2],'yyyy-mm-dd\\'T\\'HH:mm:ss'),",
+				"          IPAddress = log_data_split[3],",
+				"          RequestMethod = log_data_split[4],",
+				"          RequestResource = log_data_split[5]) ~> createFieldsfromSplit",
+				"createFieldsfromSplit split(RequestMethod=='GET',",
+				"     disjoint: false) ~> splitGetrequests@(GETrequests, OTHERequests)",
+				"splitGetrequests@GETrequests sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          LogDatetime as timestamp,",
+				"          IPAddress as string,",
+				"          RequestMethod as string,",
+				"          RequestResource as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          LogDatetime,",
+				"          IPAddress,",
+				"          RequestMethod,",
+				"          RequestResource",
+				"     )) ~> sqlDatabase"
+			]
+		}
+	}
+}

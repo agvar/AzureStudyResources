@@ -1,0 +1,25 @@
+{
+	"name": "trigger_Schedule5Mins",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Started",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "pipeline_lookup_for_StoredProc",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Minute",
+				"interval": 2,
+				"startTime": "2025-05-25T21:00:00",
+				"endTime": "2025-05-25T21:03:00",
+				"timeZone": "Eastern Standard Time"
+			}
+		}
+	}
+}

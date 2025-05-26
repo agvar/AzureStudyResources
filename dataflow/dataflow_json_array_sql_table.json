@@ -1,0 +1,80 @@
+{
+	"name": "dataflow_json_array_sql_table",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "customerJson",
+						"type": "DatasetReference"
+					},
+					"name": "customerjson"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "customerJSONtable",
+						"type": "DatasetReference"
+					},
+					"name": "customerJSONtable"
+				}
+			],
+			"transformations": [
+				{
+					"name": "flattenCoursesArray"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          customerid as integer,",
+				"          customername as string,",
+				"          registered as boolean,",
+				"          courses as string[],",
+				"          details as (mobile as string, city as string)",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     documentForm: 'arrayOfDocuments') ~> customerjson",
+				"customerjson foldDown(unroll(courses, courses),",
+				"     mapColumn(",
+				"          customerid,",
+				"          customername,",
+				"          registered,",
+				"          courses,",
+				"          details",
+				"     ),",
+				"     skipDuplicateMapInputs: false,",
+				"     skipDuplicateMapOutputs: false) ~> flattenCoursesArray",
+				"flattenCoursesArray sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          customerid as integer,",
+				"          customername as string,",
+				"          registered as boolean,",
+				"          courses as string,",
+				"          mobile as string,",
+				"          city as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          customerid,",
+				"          customername,",
+				"          registered,",
+				"          courses,",
+				"          mobile = details.mobile,",
+				"          city = details.city",
+				"     )) ~> customerJSONtable"
+			]
+		}
+	}
+}

@@ -1,0 +1,6 @@
+{
+	"name": "virtualmachineStudy001",
+	"properties": {
+		"type": "SelfHosted"
+	}
+}

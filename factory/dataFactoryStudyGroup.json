@@ -1,0 +1,9 @@
+{
+	"name": "dataFactoryStudyGroup",
+	"location": "westus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "70c76d85-7f98-4179-9870-bcad02ad7937",
+		"tenantId": "04f85ff0-4877-48e4-8650-7d5eca4e5e97"
+	}
+}

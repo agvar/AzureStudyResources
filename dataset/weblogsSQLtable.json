@@ -1,0 +1,35 @@
+{
+	"name": "weblogsSQLtable",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSqlDatabase001",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "LogDatetime",
+				"type": "datetime2",
+				"scale": 7
+			},
+			{
+				"name": "IPAddress",
+				"type": "varchar"
+			},
+			{
+				"name": "RequestMethod",
+				"type": "varchar"
+			},
+			{
+				"name": "RequestResource",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "study",
+			"table": "weblogs"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

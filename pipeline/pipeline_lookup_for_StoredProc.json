@@ -1,0 +1,70 @@
+{
+	"name": "pipeline_lookup_for_StoredProc",
+	"properties": {
+		"activities": [
+			{
+				"name": "Lookup_DB_StoredProc",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[study].[getRequestMethod]",
+						"storedProcedureParameters": {
+							"RequestResource": {
+								"type": "String",
+								"value": "/sdk"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AzureSqlTableStoredProc",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "setVariableValue",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Lookup_DB_StoredProc",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "RequestMethod",
+					"value": {
+						"value": "@activity('Lookup_DB_StoredProc').output.firstRow.RequestMethod",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"variables": {
+			"RequestMethod": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-05-24T23:43:40Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

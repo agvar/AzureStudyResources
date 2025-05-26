@@ -1,0 +1,64 @@
+{
+	"name": "pipeline_SalesDim_Fact",
+	"properties": {
+		"activities": [
+			{
+				"name": "dataflow_SalesDim_Fact",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [
+					{
+						"activity": "clearFactDimsdata",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "dataflow_SalesDim_Fact",
+						"type": "DataFlowReference"
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "clearFactDimsdata",
+				"description": "clears data from all the dims and fact tables in the study schema",
+				"type": "SqlServerStoredProcedure",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[study].[clearFactDims]"
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase_study",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2025-05-19T04:15:39Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
